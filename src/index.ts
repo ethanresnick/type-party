@@ -13,3 +13,4 @@ export { isNonEmptyArray, isNonEmptyString } from "./nonempty.js";
 export type { NonEmptyArray, NonEmptyString } from "./nonempty.js";
 export type { AllKeys, NullableKeys, StringKeys } from "./object-keys.js";
 export type { PickEach, ReplaceDeep } from "./type-mapping.js";
+export { instantiateTaggedType } from "./tagged-types.js";
