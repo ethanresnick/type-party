@@ -1,9 +1,11 @@
+export type AnyFunction = (...args: any) => any;
+
 /**
  * If you have an object type w/ a call signature but also some extra properties
  * (e.g., `{ (): Promise<void>, restoreOriginal: () => void }`), this returns
  * just the call signature (`() => Promise<void>` in the example above).
  */
-export type CallSignature<T extends (...args: any) => any> = (
+export type CallSignature<T extends AnyFunction> = (
   ...args: Parameters<T>
 ) => ReturnType<T>;
 
