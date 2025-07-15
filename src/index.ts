@@ -9,6 +9,7 @@ export type {
   CollapseCases,
   CollapseCasesDeep,
 } from "./discriminated-unions.js";
+export type { Filter } from "./arrays-and-tuples.js";
 export type { Bind1, Bind2, Bind3, Bind4, CallSignature, AnyFunction } from "./functions.js";
 export type { JSON, JSONWithUndefined } from "./json.js";
 export type { NumericRange, Permutations } from "./math.js";
