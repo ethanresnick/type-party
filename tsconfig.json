@@ -18,7 +18,7 @@
     "moduleResolution": "nodenext",
 
     // Emit.
-    "outDir": "./dist",
+    "outDir": "./runtime-built",
     "declaration": true,
     "declarationMap": true,
 
@@ -46,7 +46,12 @@
 
     // Compilation performance
     "incremental": true,
-    "skipLibCheck": true,
-    "isolatedModules": true
-  }
+    "isolatedModules": true,
+
+    // Ensures no @types/ are unintentionally included
+    "types": [],
+    // Ensures .d.ts files are checked: https://github.com/sindresorhus/tsconfig/issues/15
+    "skipLibCheck": false
+  },
+  "include": ["./runtime"]
 }

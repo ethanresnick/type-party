@@ -1,9 +1,4 @@
-// dates are turned into strings when serialized to JSON, so we want to
-
-import type { Tagged } from "type-fest";
-
-// distinguish them from arbitrary strings
-export type DateString = Tagged<string, "DateString">;
+import type { DateString } from "../types/dates.d.ts";
 
 /**
  * NB: will throw for invalid dates.

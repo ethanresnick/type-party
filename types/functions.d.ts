@@ -11,7 +11,7 @@ export type CallSignature<T extends AnyFunction> = (
 
 export type Bind1<
   F extends (arg0: A0, ...args: never[]) => unknown,
-  A0 = never
+  A0 = never,
 > = F extends (arg0: A0, ...args: infer Args) => infer R
   ? (...args: Args) => R
   : never;
@@ -19,7 +19,7 @@ export type Bind1<
 export type Bind2<
   F extends (arg0: A0, arg1: A1, ...args: never[]) => unknown,
   A0 = never,
-  A1 = never
+  A1 = never,
 > = F extends (arg0: A0, arg1: A1, ...args: infer Args) => infer R
   ? (...args: Args) => R
   : never;
@@ -28,7 +28,7 @@ export type Bind3<
   F extends (arg0: A0, arg1: A1, arg2: A2, ...args: never[]) => unknown,
   A0 = never,
   A1 = never,
-  A2 = never
+  A2 = never,
 > = F extends (arg0: A0, arg1: A1, arg2: A2, ...args: infer Args) => infer R
   ? (...args: Args) => R
   : never;
@@ -44,7 +44,7 @@ export type Bind4<
   A0 = never,
   A1 = never,
   A2 = never,
-  A3 = never
+  A3 = never,
 > = F extends (
   arg0: A0,
   arg1: A1,

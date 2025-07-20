@@ -1,37 +1,34 @@
 {
   "name": "@ethanresnick/type-party",
-  "version": "0.2.2",
+  "version": "0.3.2",
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "test": "tsd --typings types/index.d.ts",
     "prepublishOnly": "npm run build"
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "types": "./types/index.d.ts"
     },
-    "./json-runtime.js": {
-      "types": "./dist/json-runtime.d.ts",
-      "import": "./dist/json-runtime.js"
+    "./runtime/*.js": {
+      "types": "./runtime-built/*.d.ts",
+      "import": "./runtime-built/*.js"
     }
   },
   "dependencies": {
-    "glob": "^7.2.0",
     "safe-stable-stringify": "^2.5.0",
-    "type-fest": "^4.41.0",
-    "umzug": "^3.0.0",
-    "yargs": "^16.2.0"
+    "type-fest": "^4.41.0"
   },
   "devDependencies": {
-    "@types/glob": "^8.1.0",
-    "@types/umzug": "^2.3.3",
-    "@types/yargs": "^17.0.24",
-    "dotenv": "^16.0.0",
+    "prettier": "^3.6.2",
+    "tsd": "^0.32.0",
     "typescript": "^5.2.2"
   },
   "files": [
-    "dist"
+    "runtime-built",
+    "types"
   ],
+  "prettier": {},
   "packageManager": "pnpm@9.15.0+sha512.76e2379760a4328ec4415815bcd6628dee727af3779aaa4c914e3944156c4299921a89f976381ee107d41f12cfa4b66681ca9c718f0668fa0831ed4c6d8ba56c"
 }

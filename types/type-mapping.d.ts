@@ -55,37 +55,44 @@ export type ReplaceDeep<
   Type,
   Search,
   Replacement,
-  IncludeFunctions extends boolean = false
+  IncludeFunctions extends boolean = false,
 > = Type extends Search
   ? Replacement
   : Type extends Tagged<unknown, infer Tag>
-  ? Tagged<ReplaceDeep<UnwrapTagged<Type>, Search, Replacement>, Tag>
-  : Type extends Primitive | Date | RegExp
-  ? Type
-  : // Treat Promises and AsyncIterables specially because, while it's possible
-  // to do replacement totally structurally, that's likely undesirable and might
-  // push up against TS limits deep in the replacement
-  Type extends Promise<infer T>
-  ? Promise<ReplaceDeep<T, Search, Replacement, IncludeFunctions>>
-  : Type extends AsyncIterable<infer T>
-  ? Simplify<
-      AsyncIterable<ReplaceDeep<T, Search, Replacement, IncludeFunctions>> &
-        Omit<Type, typeof Symbol.asyncIterator>
-    >
-  : IncludeFunctions extends true
-  ? Type extends (...args: infer Args) => infer R
-    ? (
-        ...args: ReplaceDeep<Args, Search, Replacement, IncludeFunctions> &
-          unknown[]
-      ) => ReplaceDeep<R, Search, Replacement, IncludeFunctions>
-    : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>
-  : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>;
+    ? Tagged<ReplaceDeep<UnwrapTagged<Type>, Search, Replacement>, Tag>
+    : Type extends Primitive | Date | RegExp
+      ? Type
+      : // Treat Promises and AsyncIterables specially because, while it's possible
+        // to do replacement totally structurally, that's likely undesirable and might
+        // push up against TS limits deep in the replacement
+        Type extends Promise<infer T>
+        ? Promise<ReplaceDeep<T, Search, Replacement, IncludeFunctions>>
+        : Type extends AsyncIterable<infer T>
+          ? Simplify<
+              AsyncIterable<
+                ReplaceDeep<T, Search, Replacement, IncludeFunctions>
+              > &
+                Omit<Type, typeof Symbol.asyncIterator>
+            >
+          : IncludeFunctions extends true
+            ? Type extends (...args: infer Args) => infer R
+              ? (
+                  ...args: ReplaceDeep<
+                    Args,
+                    Search,
+                    Replacement,
+                    IncludeFunctions
+                  > &
+                    unknown[]
+                ) => ReplaceDeep<R, Search, Replacement, IncludeFunctions>
+              : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>
+            : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>;
 
 type ReplaceObjectDeep<
   Type,
   Search,
   Replacement,
-  IncludeFunctions extends boolean = false
+  IncludeFunctions extends boolean = false,
 > = Type extends object
   ? {
       [Key in keyof Type]: ReplaceDeep<

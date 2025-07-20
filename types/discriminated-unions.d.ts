@@ -1,5 +1,5 @@
 import type { Simplify } from "type-fest";
-import type { AllKeys } from "./object-keys.js";
+import type { AllKeys } from "./object-keys.d.ts";
 
 /**
  * CollapseCases takes a type T that's a union of object types, and returns a
