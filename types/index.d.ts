@@ -17,7 +17,7 @@ export type {
   Bind4,
   CallSignature,
 } from "./functions.d.ts";
-export type { JSON, JSONWithUndefined } from "./json.d.ts";
+export type { JSON, JSONWithUndefined, JsonOf } from "./json.d.ts";
 export type { NumericRange, Permutations } from "./math.d.ts";
 export type { NonEmptyArray, NonEmptyString } from "./nonempty.d.ts";
 export type { RemoveUndefinedDeep } from "./nullish-handling.d.ts";
