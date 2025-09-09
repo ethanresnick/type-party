@@ -19,5 +19,6 @@ export type Filter<T, U> = T extends readonly [infer F, ...infer R]
       ? PreserveReadonly<T, (I & U)[]>
       : never;
 
-type PreserveReadonly<T, V> =
+export type PreserveReadonly<T, V extends ReadonlyArray<any>> =
+  // inner branch is to deal with `any`
   Readonly<T> extends T ? (V extends unknown ? Readonly<V> : never) : V;
