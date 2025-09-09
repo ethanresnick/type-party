@@ -1,3 +1,6 @@
+import type { Writable } from "type-fest";
+import { IsAny } from "type-fest";
+
 export type Filter<T, U> = T extends readonly [infer F, ...infer R]
   ? // If we know there's a first element (i.e., non-empty tuple type), process
     // element by element. If F is narrower than U, keep F as-is and filter the
@@ -19,6 +22,15 @@ export type Filter<T, U> = T extends readonly [infer F, ...infer R]
       ? PreserveReadonly<T, (I & U)[]>
       : never;
 
-export type PreserveReadonly<T, V extends ReadonlyArray<any>> =
-  // inner branch is to deal with `any`
-  Readonly<T> extends T ? (V extends unknown ? Readonly<V> : never) : V;
+export type PreserveReadonly<
+  T extends ReadonlyArray<any>,
+  V extends ReadonlyArray<any>,
+> = T extends unknown // Distribute over T.
+  ? V extends unknown // Distribute over V.
+    ? IsAny<T> extends true
+      ? Writable<V>
+      : Readonly<T> extends T
+        ? Readonly<V>
+        : Writable<V>
+    : never
+  : never;

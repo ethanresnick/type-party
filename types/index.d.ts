@@ -1,4 +1,4 @@
-export type { Filter } from "./arrays-and-tuples.d.ts";
+export type { Filter, PreserveReadonly } from "./arrays-and-tuples.d.ts";
 export type { SatisfiedBy, Satisfies } from "./assignability.d.ts";
 export type { DateString } from "./dates.d.ts";
 export type {
