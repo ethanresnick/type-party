@@ -47,7 +47,7 @@ import { XXX } from "type-party/runtime/json.js"
 
 ### Discriminated Union Helpers
 
-- [`CollapseCases<T>`](types/discriminated-unions.d.ts) &mdash; Takes a union of object types and returns a single object type where each key's type is the union of types for that key across all cases. This is useful in cases where TS can't correctly figure out the assignability of complex union types with correlated key types. As a very simple example, see
+- [`CollapseCases<T>`](types/discriminated-unions.d.ts) &mdash; Takes a union of object types and returns a single object type where each key's type is the union of types for that key across all cases. This is useful in cases where TS can't correctly figure out the assignability of complex union types. See [the definition](types/discriminated-unions.d.ts) for examples.
 
 - [`CollapseCasesDeep<T>`](types/discriminated-unions.d.ts) &mdash; Like `CollapseCases`, but works recursively on nested object types within discriminated unions.
 
@@ -57,15 +57,15 @@ import { XXX } from "type-party/runtime/json.js"
 
 - [`CallSignature<T>`](types/functions.d.ts) &mdash; Extracts just the call signature from a function type that may have additional properties.
 
-- [`Bind1<F, A0>`](types/functions.d.ts), [`Bind2<F, A0, A1>`](types/functions.d.ts), [`Bind3<F, A0, A1, A2>`](types/functions.d.ts), [`Bind4<F, A0, A1, A2, A3>`](types/functions.d.ts) &mdash; Types for binding the first N arguments of a function, returning a new function type with those arguments pre-bound.
+- [`Bind1<F, A0>`](types/functions.d.ts), [`Bind2<F, A0, A1>`](types/functions.d.ts), [`Bind3<F, A0, A1, A2>`](types/functions.d.ts), [`Bind4<F, A0, A1, A2, A3>`](types/functions.d.ts) &mdash; Types for binding (partially applying) the first N arguments of a function, returning a new function type for the remaining arguments.
 
 ### JSON Types
 
-- [`JSON`](types/json.d.ts) &mdash; Represents valid JSON values: objects, arrays, strings, numbers, booleans, and null.
+- [`JSON`](types/json.d.ts) &mdash; Represents valid JSON values: objects, arrays, strings, numbers, booleans, and null. Very similar to type-fest's `JsonValue`, except that it doesn't allow keys with `undefined` values.
 
 - [`JSONWithUndefined`](types/json.d.ts) &mdash; Like `JSON`, but allows types with optional keys and undefined values that get omitted during JSON serialization.
 
-- [`JsonOf<T>`](types/json.d.ts) &mdash; Tagged string type representing a JSON serialization of type `T`.
+- [`JsonOf<T>`](types/json.d.ts) &mdash; Tagged string type representing a JSON serialization of type `T`. See [explainer and usage examples](https://medium.com/@ethanresnick/advanced-typescript-tagged-types-improved-with-type-level-metadata-5072fc125fcf). `jsonParse`, `jsonStringify`, and `jsonStringifyUnstable` are exported from `type-party/runtime/nonempty.js` to support working with this type.
 
 ### Math & Numeric Types
 
@@ -78,6 +78,8 @@ import { XXX } from "type-party/runtime/json.js"
 - [`NonEmptyString`](types/nonempty.d.ts) &mdash; Tagged string type that represents a non-empty string.
 
 - [`NonEmptyArray<T>`](types/nonempty.d.ts) &mdash; Array type that guarantees at least one element: `[T, ...T[]]`.
+
+`isNonEmptyString`, `isNonEmptyArray`, and `mapNonEmpty` are exported from `type-party/runtime/nonempty.js` to simplify working with these types.
 
 ### Nullish Handling
 
@@ -95,11 +97,11 @@ import { XXX } from "type-party/runtime/json.js"
 
 ### Type Simplification
 
-- [`Simplify<T>`](types/simplify.d.ts) &mdash; Flattens intersection types into a single object type for better IDE display.
+- [`Simplify<T>`](types/simplify.d.ts) &mdash; Flattens intersection types into a single object type for better IDE display. Similar to type-fest's simplify, but uses `DrainOuterGeneric` to avoid "type instantiation excessively deep" errors.
 
 - [`DrainOuterGeneric<T>`](types/simplify.d.ts) &mdash; Prevents type computations from contributing to TypeScript's instantiation depth counter, helping avoid "excessively deep" errors.
 
-- [`DepthCapped<T, DepthLimit?, AtDepthLimitType?>`](types/simplify.d.ts) &mdash; Limits the nesting depth of recursive types to prevent TypeScript compiler performance issues. When depth limit is reached, deeper structures are replaced with the specified type (defaults to `any`).
+- [`DepthCapped<T, DepthLimit?, AtDepthLimitType?>`](types/simplify.d.ts) &mdash; Limits the nesting depth of recursive types to prevent TypeScript compiler performance issues. When depth limit is reached, deeper structures are replaced with the specified type (defaults to `any`). This is sometimes needed when working with infinitely recursive types.
 
 ### Type Mapping
 
