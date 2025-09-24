@@ -2,6 +2,7 @@
   "name": "type-party",
   "version": "0.6.0",
   "type": "module",
+  "types": "./types/index.d.ts",
   "scripts": {
     "build": "tsc",
     "test": "tsd --typings types/index.d.ts",
