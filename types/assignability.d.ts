@@ -1,3 +1,5 @@
+import { IsEqual } from "type-fest";
+
 /**
  * Returns the first type parameter, while giving a type error if the first
  * parameter's type isn't assignable to the second parameter's type.
@@ -14,3 +16,13 @@ export type Satisfies<T extends U, U> = T;
  * the second parameter.
  */
 export type SatisfiedBy<T, _U extends T> = T;
+
+/**
+ * Returns true if the three types are equal; else false.
+ */
+export type IsEqual3<T, U, V> =
+  IsEqual<T, U> extends true
+    ? IsEqual<U, V> extends true
+      ? true
+      : false
+    : false;
