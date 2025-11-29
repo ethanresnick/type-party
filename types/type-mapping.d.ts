@@ -1,4 +1,5 @@
 import type { Primitive, Simplify, Tagged, UnwrapTagged } from "type-fest";
+import type { DrainOuterGeneric } from "./simplify.d.ts";
 
 /**
  * This type is exactly like Pick, except that it takes a union type as its
@@ -56,37 +57,39 @@ export type ReplaceDeep<
   Search,
   Replacement,
   IncludeFunctions extends boolean = false,
-> = Type extends Search
-  ? Replacement
-  : Type extends Tagged<unknown, infer Tag>
-    ? Tagged<ReplaceDeep<UnwrapTagged<Type>, Search, Replacement>, Tag>
-    : Type extends Primitive | Date | RegExp
-      ? Type
-      : // Treat Promises and AsyncIterables specially because, while it's possible
-        // to do replacement totally structurally, that's likely undesirable and might
-        // push up against TS limits deep in the replacement
-        Type extends Promise<infer T>
-        ? Promise<ReplaceDeep<T, Search, Replacement, IncludeFunctions>>
-        : Type extends AsyncIterable<infer T>
-          ? Simplify<
-              AsyncIterable<
-                ReplaceDeep<T, Search, Replacement, IncludeFunctions>
-              > &
-                Omit<Type, typeof Symbol.asyncIterator>
-            >
-          : IncludeFunctions extends true
-            ? Type extends (...args: infer Args) => infer R
-              ? (
-                  ...args: ReplaceDeep<
-                    Args,
-                    Search,
-                    Replacement,
-                    IncludeFunctions
-                  > &
-                    unknown[]
-                ) => ReplaceDeep<R, Search, Replacement, IncludeFunctions>
+> = DrainOuterGeneric<
+  Type extends Search
+    ? Replacement
+    : Type extends Tagged<unknown, infer Tag>
+      ? Tagged<ReplaceDeep<UnwrapTagged<Type>, Search, Replacement>, Tag>
+      : Type extends Primitive | Date | RegExp
+        ? Type
+        : // Treat Promises and AsyncIterables specially because, while it's possible
+          // to do replacement totally structurally, that's likely undesirable and might
+          // push up against TS limits deep in the replacement
+          Type extends Promise<infer T>
+          ? Promise<ReplaceDeep<T, Search, Replacement, IncludeFunctions>>
+          : Type extends AsyncIterable<infer T>
+            ? Simplify<
+                AsyncIterable<
+                  ReplaceDeep<T, Search, Replacement, IncludeFunctions>
+                > &
+                  Omit<Type, typeof Symbol.asyncIterator>
+              >
+            : IncludeFunctions extends true
+              ? Type extends (...args: infer Args) => infer R
+                ? (
+                    ...args: ReplaceDeep<
+                      Args,
+                      Search,
+                      Replacement,
+                      IncludeFunctions
+                    > &
+                      unknown[]
+                  ) => ReplaceDeep<R, Search, Replacement, IncludeFunctions>
+                : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>
               : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>
-            : ReplaceObjectDeep<Type, Search, Replacement, IncludeFunctions>;
+>;
 
 type ReplaceObjectDeep<
   Type,
