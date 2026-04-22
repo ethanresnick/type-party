@@ -1,6 +1,6 @@
 import stringify from "safe-stable-stringify";
 import type { GetTagMetadata } from "type-fest";
-import type { JsonOf } from "../types/json.d.ts";
+import type { Jsonify, JsonOf, NotJsonable } from "../types/json.d.ts";
 
 /**
  * Converts a value to JSON, while preserving its type for future inspection.
@@ -14,14 +14,12 @@ import type { JsonOf } from "../types/json.d.ts";
  * This string is also "stable", i.e., key insertion order in serialized objects
  * _does not_ affect the final string, which is good for making cache keys.
  *
- * NB: technically, this should return a JsonOf<Jsonify<T>>, but we don't do
- * that for now because using Jsonify almost always runs up against TS stack
- * limits.
- *
  * @param it The value to stringify.
  */
 export function jsonStringify<T>(it: T) {
-  return stringify(it) as JsonOf<T>;
+  return stringify(it) as T extends NotJsonable
+    ? undefined
+    : JsonOf<Jsonify<T>>;
 }
 
 /**
@@ -40,5 +38,7 @@ export function jsonParse<T extends JsonOf<unknown>>(it: T) {
  * reliably as a cache key, e.g. -- but may give slightly better performance.
  */
 export function jsonStringifyUnstable<T>(it: T) {
-  return JSON.stringify(it) as JsonOf<T>;
+  return JSON.stringify(it) as T extends NotJsonable
+    ? undefined
+    : JsonOf<Jsonify<T>>;
 }
