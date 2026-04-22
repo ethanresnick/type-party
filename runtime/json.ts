@@ -1,7 +1,6 @@
 import stringify from "safe-stable-stringify";
 import type { GetTagMetadata } from "type-fest";
-import type { NotJsonable } from "type-fest/source/jsonify.js";
-import type { Jsonify, JsonOf } from "../types/json.d.ts";
+import type { Jsonify, JsonOf, NotJsonable } from "../types/json.d.ts";
 
 /**
  * Converts a value to JSON, while preserving its type for future inspection.
