@@ -21,7 +21,9 @@ import type { JsonOf } from "../types/json.d.ts";
  * @param it The value to stringify.
  */
 export function jsonStringify<T>(it: T) {
-  return stringify(it) as JsonOf<T>;
+  return stringify(it) as undefined extends T
+    ? JsonOf<Exclude<T, undefined>> | undefined
+    : JsonOf<T>;
 }
 
 /**
@@ -40,5 +42,7 @@ export function jsonParse<T extends JsonOf<unknown>>(it: T) {
  * reliably as a cache key, e.g. -- but may give slightly better performance.
  */
 export function jsonStringifyUnstable<T>(it: T) {
-  return JSON.stringify(it) as JsonOf<T>;
+  return JSON.stringify(it) as undefined extends T
+    ? JsonOf<Exclude<T, undefined>> | undefined
+    : JsonOf<T>;
 }
