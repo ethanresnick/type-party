@@ -86,7 +86,7 @@ export type Jsonify<T> =
           : T extends NotJsonable
             ? never
             : // Special case certain objects
-              T extends Map<any, any> | Set<any>
+              T extends Map<any, any> | Set<any> | RegExp
               ? Record<string, never>
               : T extends RareObject
                 ? JsonifyRareObject<T>
