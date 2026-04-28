@@ -17,7 +17,7 @@ export function isNonEmptyArray<T>(
 
 export function mapNonEmpty<T extends Readonly<NonEmptyArray<unknown>>, U>(
   arr: T,
-  fn: (it: T[number]) => U,
+  fn: (it: T[number], idx: keyof T) => U,
 ): { [K in keyof T]: U } {
-  return arr.map(fn) as { [K in keyof T]: U };
+  return arr.map((it, idx) => fn(it, idx)) as { [K in keyof T]: U };
 }
