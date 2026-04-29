@@ -1,9 +1,17 @@
-import type { JsonPrimitive, Tagged, TypedArray } from "type-fest";
-import type { DrainOuterGeneric, Simplify } from "./simplify.d.ts";
+import type tag from "tagged-tag";
+import type {
+  IsEqual,
+  JsonPrimitive,
+  PickIndexSignature,
+  Tagged,
+  TypedArray,
+  UnionToIntersection,
+  UnwrapTagged,
+} from "type-fest";
+import type { Simplify } from "./simplify.d.ts";
 
 export type JSON =
-  | { [key: string]: JSON }
-  | { readonly [key: string]: JSON }
+  | { readonly [key: string]: JSON; readonly [key: symbol]: never }
   | JSON[]
   | readonly JSON[]
   | number
@@ -21,15 +29,19 @@ export type JSON =
  * undefined).
  */
 export type JSONWithUndefined =
-  | { [key: string]: JSONWithUndefined }
-  | { readonly [key: string]: JSONWithUndefined }
+  | {
+      readonly [key: string]: JSONWithUndefined | undefined;
+      readonly [key: symbol]: never;
+    }
+  | ({ readonly [x in string]?: JSONWithUndefined | undefined } & {
+      readonly [x in symbol]?: never;
+    })
   | JSONWithUndefined[]
   | readonly JSONWithUndefined[]
   | number
   | string
   | boolean
-  | null
-  | undefined;
+  | null;
 
 export type JsonOf<T> = Tagged<string, "JSON", T>;
 
@@ -74,25 +86,52 @@ type JsonifyList<T extends readonly unknown[]> = T extends readonly []
 export type Jsonify<T> =
   IsUnknownOrAny<T> extends true
     ? JSON
-    : T extends JsonPrimitive
+    : // When we have _exactly_ the JSON type, this prevents some infinite type
+      // errors; see caveats below about `T extends JSON` more generally.
+      IsEqual<T, JSON> extends true
       ? T
-      : // Any object with toJSON is special case
-        T extends { toJSON(): infer J }
-        ? J extends JSON
-          ? J
-          : Jsonify<J>
-        : T extends readonly unknown[]
-          ? JsonifyList<T>
-          : T extends NotJsonable
-            ? never
-            : // Special case certain objects
-              T extends Map<any, any> | Set<any> | RegExp
-              ? Record<string, never>
-              : T extends RareObject
-                ? JsonifyRareObject<T>
-                : T extends object
-                  ? JsonifyObject<T>
-                  : never;
+      : // If the value is a tagged type with a JSON-roundtrippable base type, return
+        // it as-is. Since the base type didn't change (including us not
+        // removing readonly), any tags are still valid. If the base type isn't
+        // JSON-roundtrippable as-is, we can't safely keep the tags. (Note: if
+        // the base type has nested `any`s that mask non-JSON-roundtrippable
+        // values, the retained tags may be invalid after all post-parse, but we
+        // ignore that case for now.)
+        //
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        T extends Tagged<unknown, PropertyKey, any>
+        ? UnwrapTagged<T> extends JSON
+          ? AddTags<UnwrapTagged<T>, T[typeof tag]>
+          : Jsonify<UnwrapTagged<T>>
+        : // NB: you might want to take the `UnwrapTagged<T> extends JSON` check we
+          // did above and apply its logic (if type extends JSON, the Jsonify
+          // result won't change) to untagged input types too. But the problem is
+          // that: 1) Jsonifying should arguably remove readonly when values are
+          // untagged, but just returning T wont; and 2) we won't end up
+          // converting inner `any`s to `JSON if we return T as-is`; and 3) most
+          // importantly, checking assignablility to JSON at all seems to cause
+          // more 'type excessively deep and possibly infinite' errors! So, we
+          // skip a `T extends JSON ? JsonWritableDeep<T>` check (where
+          // `JsonWritableDeep` would be a version of type-fest's `WritableDeep`
+          // specialized to only allow JSON-roundtrippable values, to avoid the
+          // excessively deep type error).
+          T extends JsonPrimitive
+          ? T
+          : // Any object with toJSON is special case
+            T extends { toJSON(): infer J }
+            ? Jsonify<J>
+            : T extends readonly unknown[]
+              ? JsonifyList<T>
+              : T extends NotJsonable
+                ? never
+                : // Special case certain objects
+                  T extends Map<any, any> | Set<any> | RegExp
+                  ? Record<string, never>
+                  : T extends RareObject
+                    ? JsonifyRareObject<T>
+                    : T extends object
+                      ? JsonifyObject<T>
+                      : never;
 
 // TypedArrays and boxed primitives
 type RareObject = TypedArray | Number | String | Boolean;
@@ -136,11 +175,20 @@ type JsonifyObjectInner<T extends object> = Simplify<
 >;
 
 // Sometimes, when Record<> is involved and that gets converted to an index
-// signature, the value type gets undefined tacked on (because index signatures
-// can't be optional), so this removes it.
-type JsonifyObject<T extends object> = DrainOuterGeneric<{
-  [K in keyof JsonifyObjectInner<T>]: Exclude<
-    JsonifyObjectInner<T>[K],
-    undefined
-  >;
-}>;
+// signature, or perhaps an index signature was involved directly, the value
+// type gets undefined tacked onto it (because index signatures can't be
+// optional), so this removes it.
+type JsonifyObject<T extends object> =
+  // This short-circuit can avoid some infinite type errors.
+  IsEqual<T, PickIndexSignature<T>> extends true
+    ? { [K in keyof T]: Jsonify<T[K & string]> }
+    : {
+        [K in keyof JsonifyObjectInner<T>]: Exclude<
+          JsonifyObjectInner<T>[K],
+          undefined
+        >;
+      };
+
+type AddTags<T, Tags> = UnionToIntersection<
+  { [K in keyof Tags]: Tagged<T, K, Tags[K]> }[keyof Tags]
+>;

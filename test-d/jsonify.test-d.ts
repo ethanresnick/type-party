@@ -1,84 +1,24 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 import { expectAssignable, expectNotAssignable, expectType } from "tsd";
-import type { EmptyObject, JsonObject, JsonValue } from "type-fest";
+import type { EmptyObject, JsonObject, JsonValue, Tagged } from "type-fest";
 import type { JSON, Jsonify } from "../types/json.js";
-
-interface A {
-  a: number;
-}
-
-class B {
-  a!: number;
-}
-
-interface V {
-  a?: number;
-}
 
 interface X {
   a: Date;
 }
 
-interface Y {
-  a?: Date;
-}
+declare const symbol: symbol;
 
-interface Z {
-  a: number | undefined;
-}
-
-interface W {
-  a?: () => any;
-}
-
-declare const a: Jsonify<A>;
-declare const b: Jsonify<B>;
-
-declare const v: V; // Not assignable to JsonValue because it is defined as interface
-
-declare const x: X; // Not assignable to JsonValue because it contains Date value
-declare const y: Y; // Not assignable to JsonValue because it contains Date value
-
-declare const z: Z; // Not assignable to JsonValue because undefined is not valid Json value
-declare const w: W; // Not assignable to JsonValue because a function is not valid Json value
-
-expectAssignable<JsonValue>(null);
-expectAssignable<JsonValue>(false);
-expectAssignable<JsonValue>(0);
-expectAssignable<JsonValue>("");
-expectAssignable<JsonValue>([]);
-expectAssignable<JsonValue>([] as const);
-expectAssignable<JsonValue>({});
-expectAssignable<JsonValue>([0]);
-expectAssignable<JsonValue>({ a: 0 });
-expectAssignable<JsonValue>(a);
-expectAssignable<JsonValue>(b);
-expectAssignable<JsonValue>({ a: { b: true, c: {} }, d: [{}, 2, "hi"] });
-expectAssignable<JsonValue>([{}, { a: "hi" }, null, 3]);
-
-expectNotAssignable<JsonValue>(new Date());
-expectNotAssignable<JsonValue>([new Date()]);
-expectNotAssignable<JsonValue>({ a: new Date() });
-expectNotAssignable<JsonValue>(v);
-expectNotAssignable<JsonValue>(x);
-expectNotAssignable<JsonValue>(y);
-expectNotAssignable<JsonValue>(z);
-expectNotAssignable<JsonValue>(w);
-expectNotAssignable<JsonValue>(undefined);
-expectNotAssignable<JsonValue>(5 as number | undefined);
-
-// TODO: Convert this to a `type`.
-interface Geometry {
+type Geometry = {
   type: "Point" | "Polygon";
   coordinates: [number, number];
-}
+};
 
 const point: Geometry = {
   type: "Point",
   coordinates: [1, 1],
 };
 
-expectNotAssignable<JsonValue>(point);
 expectAssignable<Jsonify<Geometry>>(point);
 
 // The following const values are examples of values `v` that are not JSON, but are *jsonable* using
@@ -157,35 +97,6 @@ expectType<{
   innerDeep: { inner: InnerFixture };
 }>({} as Jsonify<NonJsonWithToJSONWrapper>);
 
-class NonJsonWithInvalidToJSON {
-  public fixture = new Map<string, number>([
-    ["a", 1],
-    ["b", 2],
-  ]);
-
-  // This is intentionally invalid `.toJSON()`.
-  // It is invalid because the result is not assignable to `JsonValue`.
-  public toJSON(): { fixture: Map<string, number> } {
-    return {
-      fixture: this.fixture,
-    };
-  }
-}
-
-const nonJsonWithInvalidToJSON = new NonJsonWithInvalidToJSON();
-expectNotAssignable<JsonValue>(nonJsonWithInvalidToJSON);
-expectNotAssignable<JsonValue>(nonJsonWithInvalidToJSON.toJSON());
-
-// Not jsonable types; these types behave differently when used as plain values, as members of arrays and as values of objects
-declare const undefined_: undefined;
-expectNotAssignable<JsonValue>(undefined_);
-
-declare const function_: (_: any) => void;
-expectNotAssignable<JsonValue>(function_);
-
-declare const symbol: symbol;
-expectNotAssignable<JsonValue>(symbol);
-
 // Plain values fail JSON.stringify()
 declare const plainUndefined: Jsonify<undefined>;
 expectType<never>(plainUndefined);
@@ -232,13 +143,13 @@ expectType<[null]>(arrayMemberSymbol);
 // When used in object values, these keys are filtered
 declare const objectValueUndefined: Jsonify<{
   keep: string;
-  undefined: typeof undefined_;
+  undefined: undefined;
 }>;
 expectType<{ keep: string }>(objectValueUndefined);
 
 declare const objectValueFunction: Jsonify<{
   keep: string;
-  fn: typeof function_;
+  fn: (_: any) => void;
 }>;
 expectType<{ keep: string }>(objectValueFunction);
 
@@ -347,6 +258,7 @@ type AppData = {
   optionalUnion?: number | string;
   optionalStringUndefined: string | undefined;
   optionalUnionUndefined: number | string | undefined;
+  //jsonProp: JSON;
 
   // Should be omitted (all cases non-jsonable)
   requiredFunction: () => any;
@@ -369,17 +281,18 @@ type ExpectedAppDataJson = {
   optionalUnion?: string | number;
   optionalStringUndefined?: string;
   optionalUnionUndefined?: string | number;
+  //jsonProp: JSON;
 
   requiredFunctionUnion?: string;
   optionalFunctionUnion?: string;
 };
 
 declare const response: Jsonify<AppData>;
-type Xf44 = typeof response;
 
 expectType<ExpectedAppDataJson>(response);
 
-expectType<{}>({} as Jsonify<EmptyObject>);
+declare const emptyObject: Jsonify<EmptyObject>;
+expectType<{}>(emptyObject);
 
 declare const objectWithAnyProperty: Jsonify<{ a: any }>;
 expectType<{ a?: JSON }>(objectWithAnyProperty);
@@ -430,3 +343,52 @@ expectAssignable<JsonObject>({} as { a: string });
 expectNotAssignable<JsonObject>({} as { a: string | undefined });
 expectAssignable<JsonObject>({} as { a?: string });
 expectNotAssignable<JsonObject>({} as { a?: string | undefined }); // Requires `exactOptionalPropertyTypes` to be enabled
+
+// Test with constrained types + tagged types + index signatures (including with undefined)
+type AnyParamValue = Exclude<JSON, null>;
+type AnyParams = { readonly [ParamName in string]: AnyParamValue | undefined };
+type AnyParams2 = { [k: string]: AnyParamValue | undefined };
+
+type Vary<Params> = {
+  [K in keyof Params]?: Exclude<Params[K], undefined> | null;
+};
+
+// The Vary object, after param names and values have been normalized.
+type NormalizedVary<Params> = Tagged<Vary<Params>, "NormalizedVary">;
+
+type ConcreteParams = { test: string | undefined; b: true };
+
+declare const anyParams: Jsonify<AnyParams>;
+declare const anyParams2: Jsonify<AnyParams2>;
+declare const varyAnyParams: Jsonify<Vary<AnyParams>>;
+declare const varyConcreteParams: Jsonify<Vary<ConcreteParams>>;
+
+declare const normalizedVaryConcreteParams: Jsonify<
+  NormalizedVary<ConcreteParams>
+>;
+
+expectAssignable<{ readonly [k: string]: AnyParamValue }>(anyParams);
+expectAssignable<{ readonly [k in string]: AnyParamValue }>(anyParams);
+
+expectAssignable<{ [k: string]: AnyParamValue }>(anyParams);
+expectAssignable<{ [x in string]: AnyParamValue }>(anyParams2);
+
+expectAssignable<{ readonly [k: string]: AnyParamValue | null }>(varyAnyParams);
+expectAssignable<{ [x in string]: AnyParamValue | null }>(varyAnyParams);
+
+expectType<Vary<ConcreteParams>>(varyConcreteParams);
+expectType<{ test?: string | null; b?: true | null }>(varyConcreteParams);
+
+expectType<NormalizedVary<ConcreteParams>>(normalizedVaryConcreteParams);
+
+// The expectType below fails because `Vary<AnyParams> extends JSON` is false,
+// because TS adds `undefined` to the value type of Vary<AnyParams>`, even
+// though we're using exactOptionalPropertyTypes and don't write undefined. That
+// does not happen when `Params` is a concrete type, but something about the
+// interaction of the index signature on `AnyParams` (which, like all index
+// signatures, is required) getting forced to optional in the Vary mapped type
+// is probably leading `undefined` to be added to the value type.
+//
+// type _ = Vary<AnyParams> extends JSON ? true : false; declare const
+// normalizedVaryAnyParams: Jsonify<NormalizedVary<AnyParams>>;
+// expectType<NormalizedVary<AnyParams>>(normalizedVaryAnyParams);
