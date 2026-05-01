@@ -10,8 +10,46 @@ import type {
 } from "type-fest";
 import type { Simplify } from "./simplify.d.ts";
 
+// Note on the symbol-key handling in the object variants of `JSON` /
+// `JSONWithUndefined` below:
+//
+// 1. Strictly speaking, if we define JSON as "the set of values that losslessly
+//    roundtrip through `JSON.parse(JSON.stringify(x))`", objects with symbol
+//    keys do NOT satisfy that definition (symbol-keyed properties are dropped
+//    by `JSON.stringify`). So a stricter JSON type would forbid them outright.
+//
+// 2. However, we want every type produced by `Jsonify<T>` to be assignable to
+//    `JSON`. That invariant falls out of the definition of `Jsonify<T>` as "the
+//    type you'd get from `JSON.parse(JSON.stringify(x as T))`". We also want
+//    `Jsonify` to preserve tagged types, so that tagged JSON values can
+//    roundtrip through our `jsonStringify` / `jsonParse` helpers — i.e.,
+//    `jsonParse(jsonStringify(someTaggedJsonValue))` should give back an
+//    identical type. Since `jsonStringify` returns `JsonOf<Jsonify<T>>`,
+//    `Jsonify` must preserve the tag.
+//
+// 3. Unfortunately, `type-fest`'s `Tagged` attaches tags at the type level via
+//    a symbol key (which is phantom/non-existent at runtime). So forbidding all
+//    symbol keys on `JSON`'s object variants would make it impossible to keep
+//    tags on values after `Jsonify` while still satisfying the invariant that
+//    `Jsonify<T>` is assignable to `JSON`. We work around this by adding a
+//    second object variant below that specifically allows the one `tag` symbol
+//    that `Tagged` uses. That variant does NOT include the `[k: symbol]: never`
+//    index signature (it would conflict with the specific-key declaration), but
+//    it does require the `[tag]` property to be an object — which is always
+//    true for `Tagged` outputs, and which rules out arbitrary symbol-keyed
+//    values like `{ [sym]: 3 }` or `{ [sym]: sym }` whose symbol-indexed value
+//    type is a primitive (as long as that object doesn't also have a tag).
+//
+// 4. And anyway, a `[key: symbol]: never` index signature does not give us the
+//    full safety we'd hope for. It rejects object types that _explicitly_
+//    declare a symbol-keyed property, but TypeScript's "excess properties are
+//    allowed and unchecked" behavior means, e.g., `{ [k: string]: string }` is
+//    assignable to `{ [k: string]: string; [x: symbol]: never }` — even though
+//    a value of the former type can, at runtime, have symbol keys carrying
+//    arbitrary non-JSON values. So the rejection here is partial in any case.
 export type JSON =
   | { readonly [key: string]: JSON; readonly [key: symbol]: never }
+  | { readonly [key: string]: JSON; readonly [tag]: object }
   | JSON[]
   | readonly JSON[]
   | number
@@ -35,6 +73,13 @@ export type JSONWithUndefined =
     }
   | ({ readonly [x in string]?: JSONWithUndefined | undefined } & {
       readonly [x in symbol]?: never;
+    })
+  | {
+      readonly [key: string]: JSONWithUndefined | undefined;
+      readonly [tag]: object;
+    }
+  | ({ readonly [x in string]?: JSONWithUndefined | undefined } & {
+      readonly [tag]: object;
     })
   | JSONWithUndefined[]
   | readonly JSONWithUndefined[]

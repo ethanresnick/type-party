@@ -1,5 +1,6 @@
 import { expectAssignable, expectNotAssignable } from "tsd";
-import type { JSON, JSONWithUndefined } from "../types/json.js";
+import type { Tagged } from "type-fest";
+import type { Jsonify, JSON, JSONWithUndefined } from "../types/json.js";
 
 interface V {
   a?: number;
@@ -95,3 +96,21 @@ expectNotAssignable<JSON>(function_);
 
 declare const symbol: symbol;
 expectNotAssignable<JSON>(symbol);
+
+type EvaluationDimensionName = "a" | "b" | "c";
+declare const mapped: { [K in EvaluationDimensionName]: number };
+expectAssignable<JSON>(mapped);
+
+// Jsonify must preserve tags on tagged JSON values (so that tagged values can
+// roundtrip through jsonStringify / jsonParse), AND the preserved output must
+// still be assignable to JSON. That invariant is what motivates the
+// tag-symbol carve-out in the JSON type -- see the comment at the top of
+// types/json.d.ts.
+declare const taggedJsonObject: Jsonify<Tagged<{ a: string }, "Brand">>;
+expectAssignable<JSON>(taggedJsonObject);
+declare const taggedJsonString: Jsonify<Tagged<string, "Brand">>;
+expectAssignable<JSON>(taggedJsonString);
+declare const taggedJsonObjectWithUndefined: Jsonify<
+  Tagged<{ a: string }, "Brand">
+>;
+expectAssignable<JSONWithUndefined>(taggedJsonObjectWithUndefined);
