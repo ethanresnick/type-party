@@ -1,6 +1,6 @@
 {
   "name": "type-party",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "type": "module",
   "types": "./types/index.d.ts",
   "scripts": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "safe-stable-stringify": "^2.5.0",
+    "tagged-tag": "^1.0.0",
     "type-fest": "^5.0.1"
   },
   "devDependencies": {
